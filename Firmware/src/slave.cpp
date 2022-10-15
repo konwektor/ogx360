@@ -72,6 +72,7 @@ void i2c_send_data(void)
 void slave_init(void)
 {
     uint8_t slave_id = digitalRead(PLAYER_ID1_PIN) << 1 | digitalRead(PLAYER_ID2_PIN);
+    slave_id++; // BlueRetro compatibility, make player 1 slave 1 instead of master.
     Wire.begin(slave_id);
     Wire.setClock(400000);
     Wire.onRequest(i2c_send_data);

@@ -37,7 +37,7 @@ void setup()
     //10 = Player 3 (SLAVE 2)
     //11 = Player 4 (SLAVE 3)
     player_id = digitalRead(PLAYER_ID1_PIN) << 1 | digitalRead(PLAYER_ID2_PIN);
-    player_id++; // BlueRetro will send to I2C IDs 1-4 and this also makes all the OGX360's slaves
+    player_id++;  // BlueRetro compatibility, make player 1 slave 1 instead of master.
     
     if (player_id == 0)
     {
