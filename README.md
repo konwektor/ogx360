@@ -1,3 +1,6 @@
+This is a modified version of OGX360's Leonardo firmware that acts as 4 slaves instead of 3 slaves and 1 master. It is to allow a BlueRetro to be i2c master. See https://github.com/netham45/BlueRetro
+
+
 # ogx360 - Overview
 ![CI](https://github.com/Ryzee119/ogx360/workflows/CI/badge.svg)  
 
