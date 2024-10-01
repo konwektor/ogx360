@@ -8,7 +8,7 @@
 extern usbd_controller_t usbd_c[MAX_GAMEPADS];
 
 #ifdef BLUERETRO
-extern bool slave_pinged;  // Flag to control USB activation
+extern bool usb_active;  // Flag to control USB activation
 #endif
 
 void i2c_get_data(int len)
@@ -19,15 +19,18 @@ void i2c_get_data(int len)
     //Flash the LED to confirm receipt.
     if (packet_id == 0xAA)
     {
+        #ifdef BLUERETRO
+        if (!usb_active)
+        {
+            UDCON &= ~(1 << DETACH); //Activate USB here
+            RXLED1;
+            usb_active = true;
+        }
+        #endif
+
         digitalWrite(ARDUINO_LED_PIN, LOW);
         delay(250);
         digitalWrite(ARDUINO_LED_PIN, HIGH);
-
-        #ifdef BLUERETRO
-        UDCON &= ~(1 << DETACH); //Activate USB here
-        slave_pinged = true;
-        #endif
-        
         goto flush_and_leave;
     }
 
