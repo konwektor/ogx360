@@ -1,4 +1,23 @@
-This is a modified version of OGX360's Leonardo firmware that acts as 4 slaves instead of 3 slaves and 1 master. It is to allow a BlueRetro to be i2c master. See https://github.com/netham45/BlueRetro
+
+This is a modified version of OGX360's Leonardo firmware by Ryzee119 allowing compilation that acts as 4 slaves instead of 3 slaves and 1 master. 
+
+* Added a new [env:BlueRetro] section: 
+
+    It inherits all build flags from the OGX360 environment using ${env:OGX360.build_flags}.
+* Added the -DBLUERETRO flag to define the BLUERETRO macro.
+
+With this setup, you can now compile for either OGX360 (no changes), or BlueRetro fork with OGX360 support.
+
+* For OGX360: platformio run -e OGX360
+
+* For BlueRetro: platformio run -e BlueRetro
+
+The only difference between the two environments is the addition of the BLUERETRO definition. 
+
+This allows  to use #ifdef BLUERETRO in code to differentiate between the two versions, particularly in main.cpp and slave.cpp, while keeping all other settings identical.
+
+See https://github.com/konwektor/BlueRetro - BlueRetro fork with OGX360 support.
+
 
 
 # ogx360 - Overview

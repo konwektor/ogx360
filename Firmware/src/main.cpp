@@ -10,7 +10,9 @@
 uint8_t player_id;
 XID_ usbd_xid;
 usbd_controller_t usbd_c[MAX_GAMEPADS];
-
+#ifdef BLUERETRO
+bool slave_pinged = false;  //For  Blueretro compatibility, detach USB at program start - avoid blocking USB port if wired gamepad is also connected 
+#endif
 void setup()
 {
     Serial1.begin(115200);
@@ -37,8 +39,9 @@ void setup()
     //10 = Player 3 (SLAVE 2)
     //11 = Player 4 (SLAVE 3)
     player_id = digitalRead(PLAYER_ID1_PIN) << 1 | digitalRead(PLAYER_ID2_PIN);
-    player_id++;  // BlueRetro compatibility, make player 1 slave 1 instead of master.
-    
+    #ifdef BLUERETRO
+    player_id++; // BlueRetro compatibility, make player 1 slave 1 instead of master.
+    #endif
     if (player_id == 0)
     {
         master_init();
@@ -47,6 +50,10 @@ void setup()
     {
         slave_init();
     }
+    #ifdef BLUERETRO
+     // Start with USB detached
+    UDCON |= (1 << DETACH); // BlueRetro compatibility, detach USB at program start - avoid blocking USB port if wired gamepad is also connected
+    #endif
 }
 
 void loop()
@@ -76,35 +83,46 @@ void loop()
         slave_task();
     }
 
-    //Handle OG Xbox side (OG Xbox)
-    if (usbd_xid.getType() != usbd_c[0].type)
-    {
-        usbd_xid.setType(usbd_c[0].type);
-    }
+    #ifdef BLUERETRO
+    // Proceed with USB operations only if slave has been pinged and atached after
+    if (slave_pinged)
+    #endif
 
-    static uint32_t poll_timer = 0;
-    if (millis() - poll_timer > 4)
     {
-        if (usbd_xid.getType() == DUKE)
+        //Handle OG Xbox side (OG Xbox)
+        if (usbd_xid.getType() != usbd_c[0].type)
         {
-            UDCON &= ~(1 << DETACH);
-            RXLED1;
-            usbd_xid.sendReport(&usbd_c[0].duke.in, sizeof(usbd_duke_in_t));
-            usbd_xid.getReport(&usbd_c[0].duke.out, sizeof(usbd_duke_out_t));
+            usbd_xid.setType(usbd_c[0].type);
         }
-        else if (usbd_xid.getType() == STEELBATTALION)
+        
+        static uint32_t poll_timer = 0;
+        if (millis() - poll_timer > 4)
         {
-            UDCON &= ~(1 << DETACH);
-            RXLED1;
-            usbd_xid.sendReport(&usbd_c[0].sb.in, sizeof(usbd_sbattalion_in_t));
-            usbd_xid.getReport(&usbd_c[0].sb.out, sizeof(usbd_sbattalion_out_t));
-        }
-        else if (usbd_xid.getType() == DISCONNECTED)
-        {
-            UDCON |= (1 << DETACH);
-            RXLED0;
-        }
+            if (usbd_xid.getType() == DUKE)
+            {
+                #ifndef BLUERETRO
+                UDCON &= ~(1 << DETACH);
+                RXLED1;
+                usbd_xid.sendReport(&usbd_c[0].duke.in, sizeof(usbd_duke_in_t));
+                usbd_xid.getReport(&usbd_c[0].duke.out, sizeof(usbd_duke_out_t));
+                #endif
+            }
+            else if (usbd_xid.getType() == STEELBATTALION)
+            {
+                #ifndef BLUERETRO
+                UDCON &= ~(1 << DETACH);
+                RXLED1;
+                usbd_xid.sendReport(&usbd_c[0].sb.in, sizeof(usbd_sbattalion_in_t));         
+                usbd_xid.getReport(&usbd_c[0].sb.out, sizeof(usbd_sbattalion_out_t));
+                #endif
+            }
+            else if (usbd_xid.getType() == DISCONNECTED) // If the device is disconnected, detach USB
+            {
+                UDCON |= (1 << DETACH);
+                RXLED0;
+            }
 
-        poll_timer = millis();
+            poll_timer = millis();
+        }
     }
 }

@@ -3,10 +3,13 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-
 #include "main.h"
 
 extern usbd_controller_t usbd_c[MAX_GAMEPADS];
+
+#ifdef BLUERETRO
+extern bool slave_pinged;  // Flag to control USB activation
+#endif
 
 void i2c_get_data(int len)
 {
@@ -19,6 +22,12 @@ void i2c_get_data(int len)
         digitalWrite(ARDUINO_LED_PIN, LOW);
         delay(250);
         digitalWrite(ARDUINO_LED_PIN, HIGH);
+
+        #ifdef BLUERETRO
+        UDCON &= ~(1 << DETACH); //Activate USB here
+        slave_pinged = true;
+        #endif
+        
         goto flush_and_leave;
     }
 
@@ -72,7 +81,9 @@ void i2c_send_data(void)
 void slave_init(void)
 {
     uint8_t slave_id = digitalRead(PLAYER_ID1_PIN) << 1 | digitalRead(PLAYER_ID2_PIN);
-    slave_id++; // BlueRetro compatibility, make player 1 slave 1 instead of master.
+    #ifdef BLUERETRO
+    slave_id++; // BlueRetro compatibility, make player 1 slave 1, instead of master
+    #endif
     Wire.begin(slave_id);
     Wire.setClock(400000);
     Wire.onRequest(i2c_send_data);
