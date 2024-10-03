@@ -21,6 +21,9 @@
 * Install the [PlatformIO IDE](https://platformio.org/platformio-ide) plugin.
 * Clone with git `git clone https://github.com/Ryzee119/ogx360.git --recursive`. Recursively!
 * In Visual Studio Code `File > Open Folder... > ogx360/Firmware`
+* 
+* !!!Make sure to set build flags on Platform IO toolbar to correct build - choose beetwen ogx360 and BlueRetro!!!
+* 
 * Hit build on the Platform IO toolbar (`✓`).
 * Follow the Programming instructions to program.
 * Or see the `.pio/build/` folder for the compiled hex files.
