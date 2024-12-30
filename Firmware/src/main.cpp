@@ -25,16 +25,8 @@ void setup()
     pinMode(ARDUINO_LED_PIN, OUTPUT);
     pinMode(PLAYER_ID1_PIN, INPUT_PULLUP);
     pinMode(PLAYER_ID2_PIN, INPUT_PULLUP);
-    //digitalWrite(ARDUINO_LED_PIN, HIGH);
-
-    // Set the state of the ARDUINO_LED_PIN based on BlueRetro presence
-    #ifdef BLUERETRO
-    digitalWrite(ARDUINO_LED_PIN, LOW); // When BLUERETRO is defined, turn off the LED to indicate USB is detached at startup
-    #else
-    digitalWrite(ARDUINO_LED_PIN, HIGH); // Turn on the LED to indicate the device is ready (legacy behavior)
-    #endif
-
-
+    digitalWrite(ARDUINO_LED_PIN, HIGH);
+       
     memset(usbd_c, 0x00, sizeof(usbd_controller_t) * MAX_GAMEPADS);
 
     for (uint8_t i = 0; i < MAX_GAMEPADS; i++)
@@ -96,64 +88,57 @@ void loop()
     {
         usbd_xid.setType(usbd_c[0].type);
     }
-    
+    // Timer to limit polling frequency
     static uint32_t poll_timer = 0;
-    if (millis() - poll_timer > 4)
+    if (millis() - poll_timer > 4) // Check if 4ms have passed
     {
         #ifdef BLUERETRO
-        if (usb_active) // USB active after ping
+        if (usb_active) // Execute only when flag is true - after slave ping
         {
+            // Handle USB device types
             if (usbd_xid.getType() == DUKE)
             {
                 UDCON &= ~(1 << DETACH); // Attach USB
-                RXLED1;
+                TXLED1; // Turn TX LED on instead of RX - When BLUERETRO is defined, turn on the LED to indicate USB is attached
                 usbd_xid.sendReport(&usbd_c[0].duke.in, sizeof(usbd_duke_in_t));
                 usbd_xid.getReport(&usbd_c[0].duke.out, sizeof(usbd_duke_out_t));
             }
             else if (usbd_xid.getType() == STEELBATTALION)
             {
                 UDCON &= ~(1 << DETACH); // Attach USB
-                RXLED1;
+                TXLED1;
                 usbd_xid.sendReport(&usbd_c[0].sb.in, sizeof(usbd_sbattalion_in_t));
                 usbd_xid.getReport(&usbd_c[0].sb.out, sizeof(usbd_sbattalion_out_t));
             }
             else if (usbd_xid.getType() == DISCONNECTED)
             {
                 UDCON |= (1 << DETACH); // Detach USB
-                RXLED0; // Indicate disconnected state
-            }
-        }
-        else // usb_active == false
-        {
-            if (usbd_xid.getType() == DISCONNECTED)
-            {
-                UDCON |= (1 << DETACH); // Detach USB
-                RXLED0; // Indicate disconnected state
+                TXLED0; // Turn TX LED off (for BlueRetro) - When BLUERETRO is defined, turn off the LED to indicate USB is detached 
+                usb_active = false; // Set flag to false when disconnected
             }
         }
         #else
-        // BLUERETRO not defined, proceed as default
+        // If BLUERETRO is not defined, use RXLED instead of TXLED - legacy behavior
         if (usbd_xid.getType() == DUKE)
         {
             UDCON &= ~(1 << DETACH); // Attach USB
-            RXLED1;
+            RXLED1; // Turn RX LED on (for non-BlueRetro)
             usbd_xid.sendReport(&usbd_c[0].duke.in, sizeof(usbd_duke_in_t));
             usbd_xid.getReport(&usbd_c[0].duke.out, sizeof(usbd_duke_out_t));
         }
         else if (usbd_xid.getType() == STEELBATTALION)
         {
             UDCON &= ~(1 << DETACH); // Attach USB
-            RXLED1;
+            RXLED1; // Turn RX LED on (for non-BlueRetro)
             usbd_xid.sendReport(&usbd_c[0].sb.in, sizeof(usbd_sbattalion_in_t));
             usbd_xid.getReport(&usbd_c[0].sb.out, sizeof(usbd_sbattalion_out_t));
         }
         else if (usbd_xid.getType() == DISCONNECTED)
         {
             UDCON |= (1 << DETACH); // Detach USB
-            RXLED0; // Indicate disconnected state
+            RXLED0; // Turn RX LED off (for non-BlueRetro)
         }
         #endif
-
-        poll_timer = millis();
+        poll_timer = millis(); // Update the timer
     }
 }
