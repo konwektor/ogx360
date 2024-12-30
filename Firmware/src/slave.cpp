@@ -22,10 +22,9 @@ void i2c_get_data(int len)
         #ifdef BLUERETRO
         if (!usb_active)
         {
-           usb_active = true;
+            usb_active = true;
         }
         #endif
-
         digitalWrite(ARDUINO_LED_PIN, LOW);
         delay(250);
         digitalWrite(ARDUINO_LED_PIN, HIGH);
